@@ -63,14 +63,40 @@ print(ethane)
 
 # try loading a basis set
 basis = loader.BasisSetLoader(basis_folder="/Users/hemanthharidas/Desktop/codes/hartee-fock/basis-sets")
-test = basis.load(basis_name="def2-tzvp", basis_type="gaussian94", atoms=["H", "O", "H"])
+test = basis.load(basis_name="6-31g", basis_type="gaussian94", atoms=peroxide.atoms)
 
 # print the basis set information
-# for key in test.keys():
-#     shells = test[key]
-#     for shell in shells:
-#         print(f"Shell Type      : {shell.angular_momentum:10s}\n",
-#               f"Exponents       : {shell.exponents}\n",
-#               f"Coefficients    : {shell.coefficients}\n"
-#               f"Normalizations  : {shell.normalized_coeffs.values()}"
-#               )
+for key in test.keys():
+    print(key)
+    shells = test[key]
+    for shell in shells:
+        print(f"Shell Type      : {shell.angular_momentum:10s}\n",
+              f"Exponents       : {shell.exponents}\n",
+              f"Coefficients    : {shell.coefficients}\n"
+              f"Normalizations  : {shell.normalized_coeffs.values()}"
+              )
+
+# try loading D shell
+kcl = cartesian.Cartesian()
+kcl.geometry = (
+    ["K", "Cl"],  # atoms
+    [
+        [-1.713138, 0.994968, 0.000000],
+        [1.002682, 1.069375, 0.000000],
+    ],  # coordinates
+    0, 1  # charge and multiplicity
+)
+print(kcl)
+
+test = basis.load(basis_name="6-31g", basis_type="gaussian94", atoms=kcl.atoms)
+
+# print the basis set information
+for key in test.keys():
+    print(key)
+    shells = test[key]
+    for shell in shells:
+        print(f"Shell Type      : {shell.angular_momentum:10s}\n",
+              f"Exponents       : {shell.exponents}\n",
+              f"Coefficients    : {shell.coefficients}\n"
+              f"Normalizations  : {shell.normalized_coeffs.values()}"
+              )
