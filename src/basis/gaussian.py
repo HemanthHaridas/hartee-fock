@@ -1,52 +1,59 @@
-import numpy as np
+import numpy
 from src.basis import base
 
 
 class Gaussian94Shell(base.BaseShell):
-    """
-    Shell parser for Gaussian94-type basis set files.
-    Each shell block looks like:
-        S   3  1.00
-          34.0613410   0.0060680
-           5.1235746   0.0453080
-           1.1646626   0.2028220
-    """
+    @classmethod
+    def parse_file(cls, lines: list[str], atoms: list[str]) -> dict[str, list[base.BaseShell]]:
+        """
+        Parse a Gaussian94 .gbs file and return shells only for requested atoms.
 
-    def parse(self, lines: list[str]):
-        header = lines[0].split()
-        self.angular_momentum = base.AngularMomentum.from_string(header[0])
-        nprimitives = int(header[1])
-        scale = float(header[2]) if len(header) > 2 else 1.0
+        Parameters
+        ----------
+        lines : list[str]
+            Contents of the basis set file.
+        atoms : list[str]
+            Atom symbols present in the molecule (e.g. ["H", "O", "C"]).
 
-        exps, coeffs = [], []
-        for line in lines[1:1 + nprimitives]:
+        Returns
+        -------
+        dict[str, list[BaseShell]]
+            Mapping from atom symbol to list of shells.
+        """
+        shells_by_atom = {}
+        it = iter(lines)
+        current_element = None
+
+        for line in it:
+            if not line or line.startswith("!"):
+                continue
+            if line.startswith("****"):
+                current_element = None
+                continue
+
             parts = line.split()
-            exps.append(float(parts[0]))
-            coeffs.append(float(parts[1]) * scale)
-
-        self.exponents = np.array(exps)
-        self.coefficients = np.array(coeffs)
-        self.shell = np.array(self.angular_momentum.value[0])
-
-    @staticmethod
-    def parse_file(lines: list[str]) -> list["Gaussian94Shell"]:
-        """
-        Parse an entire Gaussian94 basis set file into multiple shells.
-        """
-        shells = []
-        i = 0
-        while i < len(lines):
-            if not lines[i].strip():
-                i += 1
+            # element header
+            if len(parts) == 2 and parts[0].isalpha():
+                current_element, charge = parts[0], int(parts[1])
+                if current_element not in atoms:
+                    current_element = None  # skip this block
+                else:
+                    shells_by_atom[current_element] = []
                 continue
-            header = lines[i].split()
-            if len(header) < 2:
-                i += 1
-                continue
-            nprimitives = int(header[1])
-            block = lines[i:i + 1 + nprimitives]
-            shell = Gaussian94Shell()
-            shell.parse(block)
-            shells.append(shell)
-            i += 1 + nprimitives
-        return shells
+
+            # shell header
+            if current_element and len(parts) >= 3:
+                label, nprim, scale = parts[0], int(parts[1]), float(parts[2])
+                am = base.AngularMomentum.from_string(label)
+                exps, coeffs = [], []
+                for _ in range(nprim):
+                    exp_line = next(it).replace("D", "E")
+                    exp, coeff = exp_line.split()
+                    exps.append(float(exp))
+                    coeffs.append(float(coeff) * scale)
+                shell = cls(angular_momentum=am)
+                shell.exponents = numpy.array(exps)
+                shell.coefficients = numpy.array(coeffs)
+                shells_by_atom[current_element].append(shell)
+
+        return shells_by_atom

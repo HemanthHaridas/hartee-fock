@@ -1,5 +1,5 @@
 import os
-from src.basis import gaussian, molpro
+from src.basis import gaussian
 
 
 class BasisSetLoader:
@@ -12,24 +12,8 @@ class BasisSetLoader:
     def __init__(self, basis_folder: str = "basis"):
         self.basis_folder = basis_folder
 
-    def load(self, basis_name: str, basis_type: str):
-        """
-        Load and normalize a basis set by name and type.
-
-        Parameters
-        ----------
-        basis_name : str
-            Name of the basis set file (e.g. 'sto-3g', 'cc-pVDZ').
-        basis_type : str
-            Type of basis set ('gaussian' or 'molpro').
-
-        Returns
-        -------
-        shells : list[BaseShell]
-            Parsed and normalized shells from the basis set file.
-        """
+    def load(self, basis_name: str, basis_type: str, atoms: list[str]):
         filepath = os.path.join(self.basis_folder, basis_name)
-
         if not os.path.exists(filepath):
             raise FileNotFoundError(f"Basis set file '{filepath}' not found in {self.basis_folder}")
 
@@ -37,15 +21,14 @@ class BasisSetLoader:
             lines = [line.strip() for line in f.readlines()]
 
         basis_type = basis_type.lower()
-        if basis_type == "gaussian94":
-            shells = gaussian.Gaussian94Shell.parse_file(lines)
-        elif basis_type == "molpro":
-            shells = molpro.MolproShell.parse_file(lines)
+        if basis_type == ("gaussian94"):
+            shells_by_atom = gaussian.Gaussian94Shell.parse_file(lines, atoms)
         else:
-            raise ValueError("basis_type must be either 'gaussian' or 'molpro'")
+            raise ValueError("basis_type must be 'gaussian94'")
 
-        # Automatically normalize all shells
-        for sh in shells:
-            sh.normalize()
+        # Normalize all shells
+        for atom_shells in shells_by_atom.values():
+            for sh in atom_shells:
+                sh.normalize()
 
-        return shells
+        return shells_by_atom

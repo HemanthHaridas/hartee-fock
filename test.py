@@ -1,3 +1,4 @@
+from src.basis import loader
 from src.geometry import cartesian
 
 # create a water molecule
@@ -12,3 +13,8 @@ water.geometry = (
     0, 1  # charge and multiplicity
 )
 print(water)
+
+
+basis = loader.BasisSetLoader(basis_folder="/Users/hemanthharidas/Desktop/codes/hartee-fock/basis-sets")
+test = basis.load(basis_name="def2-tzvp", basis_type="gaussian94", atoms=["H", "O", "H"])
+print(test)
