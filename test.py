@@ -1,6 +1,7 @@
 from src.basis import loader
 from src.geometry import cartesian
 from src.geometry import zmatrix
+from src.integrals.python import base
 
 # create a water molecule using cartesian coordinates
 water = cartesian.Cartesian()
@@ -24,7 +25,7 @@ O 1 1.0
 O 2 1.5 1 109.71
 H 3 1.0 2 109.71 1 0.000
 """
-# print(peroxide)
+print(peroxide)
 
 # create a methane moleule using z-matrix
 # test variable substitution
@@ -59,22 +60,10 @@ H  3  {r6}  2  {a6}  1  {d6}
 H  3  {r7}  2  {a7}  1  {d7}
 H  3  {r8}  2  {a8}  1  {d8}
 """
-# print(ethane)
+print(ethane)
 
 # try loading a basis set
 basis = loader.BasisSetLoader(basis_folder="/Users/hemanthharidas/Desktop/codes/hartee-fock/basis-sets")
-# test = basis.load(basis_name="6-31g", basis_type="gaussian94", atoms=peroxide.atoms)
-
-# print the basis set information
-# for key in test.keys():
-#     print(key)
-#     shells = test[key]
-#     for shell in shells:
-#         print(f"Shell Type      : {shell.angular_momentum:10s}\n",
-#               f"Exponents       : {shell.exponents}\n",
-#               f"Coefficients    : {shell.coefficients}\n"
-#               f"Normalizations  : {shell.normalized_coeffs.values()}"
-#               )
 
 # try loading D shell
 kcl = cartesian.Cartesian()
@@ -86,9 +75,9 @@ kcl.geometry = (
     ],  # coordinates
     0, 1  # charge and multiplicity
 )
-# print(kcl)
+print(kcl)
 
-test = basis.set_basis_functions(basis_name="6-31g", basis_type="gaussian94", molecule=water.geometry)
+test = basis.load(basis_name="6-31g", basis_type="gaussian94", molecule=water.geometry)
 
 # print the basis set information
 for shell in test:
@@ -99,3 +88,12 @@ for shell in test:
           f"Normalizations  : {shell.normalized_coeffs.values()}\n"
           f"Center          : {shell.atom} at {shell.location}"
           )
+
+# write the basis sets as an xml file
+basis._write_xml()
+
+# now test gaussian product theorem
+gaussian_centers, gaussian_exponents, gaussian_prefactors = base.gaussian_products(
+    centerA=test[0].location, exponentA=test[0].exponents,
+    centerB=test[2].location, exponentB=test[2].exponents
+)
