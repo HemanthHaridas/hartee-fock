@@ -93,7 +93,7 @@ for shell in test:
 basis._write_xml()
 
 # now test gaussian product theorem
-gaussian_centers, gaussian_exponents, gaussian_prefactors = base.gaussian_products(
+gaussiancenters, gaussianintegrals, gaussianexponents = base.gaussiantheorem(
     centerA=test[0].location, exponentA=test[0].exponents,
     centerB=test[2].location, exponentB=test[2].exponents
 )
