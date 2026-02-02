@@ -44,6 +44,8 @@ class BaseShell(abc.ABC):
         self.angular_momentum: AngularMomentum = angular_momentum
         self.exponents: numpy.ndarray = numpy.array([])
         self.coefficients: numpy.ndarray = numpy.array([])
+        self.location: numpy.ndarray = numpy.zeros(3)
+        self.atom: str = None
         # dictionary: tuple -> normalized coefficients
         self.normalized_coeffs: dict[tuple[int, int, int], numpy.ndarray] = {}
 

@@ -1,5 +1,7 @@
 import os
-from src.basis import gaussian
+import typing
+import numpy
+from src.basis import base, gaussian
 
 
 class BasisSetLoader:
@@ -22,13 +24,63 @@ class BasisSetLoader:
 
         basis_type = basis_type.lower()
         if basis_type == ("gaussian94"):
-            shells_by_atom = gaussian.Gaussian94Shell.parse_file(lines, atoms)
+            self.shells_by_atom = gaussian.Gaussian94Shell.parse_file(lines, atoms)
         else:
             raise ValueError("basis_type must be 'gaussian94'")
 
         # Normalize all shells
-        for atom_shells in shells_by_atom.values():
+        for atom_shells in self.shells_by_atom.values():
             for sh in atom_shells:
                 sh.normalize()
 
-        return shells_by_atom
+        return self.shells_by_atom
+
+    def set_basis_functions(self, molecule: typing.Dict[str, typing.Any], basis_name: str, basis_type: str) -> list[base.BaseShell]:
+        """
+        Construct and assign basis functions to each atom in a molecule.
+
+        This method loads the specified basis set, parses it into atomic shells,
+        normalizes the shells, and then attaches them to the atoms in the given
+        molecule. Each shell is annotated with its atomic symbol and Cartesian
+        coordinates, producing a complete list of basis functions for the system.
+
+        Parameters
+        ----------
+        molecule : dict[str, Any]
+            A dictionary describing the molecule, with at least:
+            - "atoms" : list[str]
+                List of atomic symbols (e.g., ["H", "O", "H"]).
+            - "coords" : numpy.ndarray
+                Array of Cartesian coordinates with shape (N, 3), where N is
+                the number of atoms.
+        basis_name : str
+            Name of the basis set file to load (e.g., "sto-3g.gbs").
+        basis_type : str
+            Type of basis set format (currently only "gaussian94" supported).
+
+        Returns
+        -------
+        list[base.BaseShell]
+            A flat list of all basis functions (shells) in the molecule,
+            each annotated with its atom type and spatial location.
+
+        Raises
+        ------
+        FileNotFoundError
+            If the specified basis set file cannot be found.
+        ValueError
+            If the basis_type is unsupported.
+        """
+
+        _atoms      : list[str] = molecule["atoms"]
+        _coords     : numpy.ndarray = molecule["coords"]
+        _basis      : dict[str, list[base.BaseShell]] = self.load(basis_name, basis_type, _atoms)
+        _full_basis : list[base.BaseShell] = []
+
+        for _index, _atom in enumerate(_atoms):
+            for _sh in _basis[_atom]:
+                _sh.location = _coords[_index]
+                _sh.atom = _atom
+                _full_basis.append(_sh)
+
+        return _full_basis
