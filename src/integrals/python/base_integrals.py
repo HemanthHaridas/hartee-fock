@@ -1,7 +1,7 @@
 import numpy
 import abc
 import typing
-from src.basis import base
+from src.basis import base_basis
 
 
 class IntegralEngine(abc.ABC):
@@ -11,7 +11,7 @@ class IntegralEngine(abc.ABC):
     (e.g., McMurchie-Davidson, Obara-Saika).
     """
 
-    def __init__(self, basis_set: list[base.BaseShell] = None, use_optimized: bool = False):
+    def __init__(self, basis_set: list[base_basis.BaseShell] = None, use_optimized: bool = False):
         """
         Initialize the integral engine.
 
@@ -20,7 +20,7 @@ class IntegralEngine(abc.ABC):
         basis_set : object, optional
             Basis set information (exponents, coefficients, angular momentum).
         """
-        self.basis_set       : list[base.BaseShell] = basis_set
+        self.basis_set       : list[base_basis.BaseShell] = basis_set
         self.use_optimized   : bool = use_optimized
         self.integral_backend: typing.Any = None
 
@@ -141,3 +141,45 @@ def gaussian_product_theorem(centerA: numpy.ndarray, exponentA: numpy.ndarray,
     gaussian_integrals = numpy.exp(-gaussian_exponents * squared_dist)
 
     return gaussian_centers, gaussian_integrals, gaussian_exponents
+
+
+def double_factorial_array(values: numpy.ndarray) -> numpy.ndarray:
+    """
+    Create a 2D array where each row starts at a value from `values`
+    and descends to 1 with step size 2, then compute double factorials.
+
+    Parameters
+    ----------
+    values : ndarray of int
+        Input array of non-negative integers.
+
+    Returns
+    -------
+    ndarray of int
+        2D array of double factorials.
+    """
+    # Maximum row length (largest value down to 1, step 2)
+    max_len = (values.max() // 2) + 1
+    mat = numpy.zeros((len(values), max_len), dtype=int)
+
+    for i, v in enumerate(values):
+        row = numpy.arange(v, 0, -2)
+        mat[i, :len(row)] = row
+
+    # Vectorized double factorial using gamma function generalization
+    # For integers: n!! = 2^(n/2) * (n/2)! if n even, else (n)! / (2^( (n-1)/2 ) * ((n-1)/2)! )
+    def _double_factorial(n: int):
+        if n == 0 or n == -1:
+            return 1
+        elif n < -1:
+            return 0
+        result = 1
+        while n > 0:
+            result *= n
+            n -= 2
+        return result
+
+    vec_df = numpy.vectorize(_double_factorial)
+
+    # results are the first columns
+    return vec_df(mat)[:, 0]
