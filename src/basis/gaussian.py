@@ -1,10 +1,10 @@
 import numpy
-from src.basis import base
+from src.basis import base_basis
 
 
-class Gaussian94Shell(base.BaseShell):
+class Gaussian94Shell(base_basis.BaseShell):
     @classmethod
-    def parse_file(cls, lines: list[str], atoms: list[str]) -> dict[str, list[base.BaseShell]]:
+    def parse_file(cls, lines: list[str], atoms: list[str]) -> dict[str, list[base_basis.BaseShell]]:
         """
         Parse a Gaussian94 .gbs file and return shells only for requested atoms.
 
@@ -55,19 +55,19 @@ class Gaussian94Shell(base.BaseShell):
                         coeffs_p.append(float(coeff_p) * scale)
 
                     # Build S shell
-                    shell_s = cls(angular_momentum=base.AngularMomentum.from_string("S"))
+                    shell_s = cls(angular_momentum=base_basis.AngularMomentum.from_string("S"))
                     shell_s.exponents = numpy.array(exps)
                     shell_s.coefficients = numpy.array(coeffs_s)
                     shells_by_atom[current_element].append(shell_s)
 
                     # Build P shell
-                    shell_p = cls(angular_momentum=base.AngularMomentum.from_string("P"))
+                    shell_p = cls(angular_momentum=base_basis.AngularMomentum.from_string("P"))
                     shell_p.exponents = numpy.array(exps)
                     shell_p.coefficients = numpy.array(coeffs_p)
                     shells_by_atom[current_element].append(shell_p)
 
                 else:
-                    am = base.AngularMomentum.from_string(label)
+                    am = base_basis.AngularMomentum.from_string(label)
                     exps, coeffs = [], []
                     for _ in range(nprim):
                         exp_line = next(it).replace("D", "E")

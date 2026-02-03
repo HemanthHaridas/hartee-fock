@@ -2,7 +2,7 @@ import xml.etree.ElementTree as ET
 import os
 import typing
 import numpy
-from src.basis import base, gaussian
+from src.basis import base_basis, gaussian
 from xml.dom import minidom
 
 
@@ -37,7 +37,7 @@ class BasisSetLoader:
 
         return self.shells_by_atom
 
-    def load(self, molecule: typing.Dict[str, typing.Any], basis_name: str, basis_type: str) -> list[base.BaseShell]:
+    def load(self, molecule: typing.Dict[str, typing.Any], basis_name: str, basis_type: str) -> list[base_basis.BaseShell]:
         """
         Construct and assign basis functions to each atom in a molecule.
 
@@ -62,7 +62,7 @@ class BasisSetLoader:
 
         Returns
         -------
-        list[base.BaseShell]
+        list[base_basis.BaseShell]
             A flat list of all basis functions (shells) in the molecule,
             each annotated with its atom type and spatial location.
 
@@ -76,8 +76,8 @@ class BasisSetLoader:
 
         _atoms      : list[str] = molecule["atoms"]
         _coords     : numpy.ndarray = molecule["coords"]
-        _basis      : dict[str, list[base.BaseShell]] = self._load(basis_name, basis_type, _atoms)
-        self.full_basis : list[base.BaseShell] = []
+        _basis      : dict[str, list[base_basis.BaseShell]] = self._load(basis_name, basis_type, _atoms)
+        self.full_basis : list[base_basis.BaseShell] = []
 
         for _index, _atom in enumerate(_atoms):
             for _sh in _basis[_atom]:
@@ -135,7 +135,7 @@ class BasisSetLoader:
             with open(checkpoint, "w", encoding="utf-8") as f:
                 f.write(pretty_xml)
 
-    def _read_xml(self, checkpoint: str = "checkpoint.xml") -> list[base.BaseShell]:
+    def _read_xml(self, checkpoint: str = "checkpoint.xml") -> list[base_basis.BaseShell]:
         """
         Read basis set information from an XML file and set self.full_basis.
 
@@ -146,7 +146,7 @@ class BasisSetLoader:
 
         Returns
         -------
-        list[base.BaseShell]
+        list[base_basis.BaseShell]
             List of reconstructed shells.
         """
         if not os.path.exists(checkpoint):
@@ -155,7 +155,7 @@ class BasisSetLoader:
         tree = ET.parse(checkpoint)
         root = tree.getroot()
 
-        shells: list[base.BaseShell] = []
+        shells: list[base_basis.BaseShell] = []
         for shell_elem in root.findall("Shell"):
             atom = shell_elem.get("atom")
             location = numpy.array(list(map(float, shell_elem.get("location").split())))
@@ -181,7 +181,7 @@ class BasisSetLoader:
                     norm_coeffs[(lx, ly, lz)] = arr
 
             # Construct shell
-            sh = base.BaseShell(ang_mom)
+            sh = base_basis.BaseShell(ang_mom)
             sh.atom = atom
             sh.location = location
             sh.exponents = exps

@@ -2,11 +2,11 @@
 
 import typing
 import numpy
-from src.geometry import base
+from src.geometry import base_geometry
 from src.helpers import tables
 
 
-class ZMatrix(base.BaseGeometry):
+class ZMatrix(base_geometry.BaseGeometry):
     """
     Concrete implementation of BaseGeometry using Z-matrix (internal coordinates).
 

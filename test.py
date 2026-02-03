@@ -1,8 +1,8 @@
-from scr.integrals.python import one_electron
+# from src.integrals.python import engine
 from src.basis import loader
 from src.geometry import cartesian
 from src.geometry import zmatrix
-from src.integrals.python import base
+# from src.integrals.python import base
 
 # create a water molecule using cartesian coordinates
 water = cartesian.Cartesian()
@@ -94,10 +94,10 @@ for shell in basis_sets:
 basis._write_xml()
 
 # now test gaussian product theorem
-gaussian_centers, gaussian_integrals, gaussian_exponents = base.gaussian_product_theorem(
-    centerA=basis_sets[0].location, exponentA=basis_sets[0].exponents,
-    centerB=basis_sets[2].location, exponentB=basis_sets[2].exponents
-)
+# gaussian_centers, gaussian_integrals, gaussian_exponents = base.gaussian_product_theorem(
+#     centerA=basis_sets[0].location, exponentA=basis_sets[0].exponents,
+#     centerB=basis_sets[2].location, exponentB=basis_sets[2].exponents
+# )
 
 # start creating integral kernel
-integral_kernel = one_electron.McMurchieDavidson(basis_set=basis_sets)
+# integral_kernel = engine.McMurchieDavidson(basis_set=basis_sets, use_optimized=True)

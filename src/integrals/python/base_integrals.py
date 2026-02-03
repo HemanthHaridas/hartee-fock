@@ -1,6 +1,7 @@
-import numpy as np
+import numpy
 import abc
-from scr.basis import base
+import typing
+from src.basis import base
 
 
 class IntegralEngine(abc.ABC):
@@ -10,7 +11,7 @@ class IntegralEngine(abc.ABC):
     (e.g., McMurchie-Davidson, Obara-Saika).
     """
 
-    def __init__(self, basis_set: list[base.BaseShell] = None, use_optimized: str = False):
+    def __init__(self, basis_set: list[base.BaseShell] = None, use_optimized: bool = False):
         """
         Initialize the integral engine.
 
@@ -19,7 +20,16 @@ class IntegralEngine(abc.ABC):
         basis_set : object, optional
             Basis set information (exponents, coefficients, angular momentum).
         """
-        self.basis_set = basis_set
+        self.basis_set       : list[base.BaseShell] = basis_set
+        self.use_optimized   : bool = use_optimized
+        self.integral_backend: typing.Any = None
+
+        if self.use_optimized:
+            try:
+                from src.integrals.cpp import integrals
+                self.integral_backend = integrals
+            except ImportError as e:
+                raise RuntimeError("Optimized C++ backend not found.") from e
 
     @abc.abstractmethod
     def compute_overlap(self, shell_a, shell_b):
@@ -73,8 +83,8 @@ class IntegralEngine(abc.ABC):
 
 
 # Utility Functions
-def gaussian_product_theorem(centerA: np.ndarray, exponentA: np.ndarray,
-                             centerB: np.ndarray, exponentB: np.ndarray) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+def gaussian_product_theorem(centerA: numpy.ndarray, exponentA: numpy.ndarray,
+                             centerB: numpy.ndarray, exponentB: numpy.ndarray) -> tuple[numpy.ndarray, numpy.ndarray, numpy.ndarray]:
     """
     Compute the Gaussian product theorem quantities for two 3D centers with sets of exponents.
 
@@ -125,9 +135,9 @@ def gaussian_product_theorem(centerA: np.ndarray, exponentA: np.ndarray,
 
     # Distance squared between centers
     diff = centerA - centerB
-    squared_dist = np.dot(diff, diff)
+    squared_dist = numpy.dot(diff, diff)
 
     # Integrals
-    gaussian_integrals = np.exp(-gaussian_exponents * squared_dist)
+    gaussian_integrals = numpy.exp(-gaussian_exponents * squared_dist)
 
     return gaussian_centers, gaussian_integrals, gaussian_exponents
