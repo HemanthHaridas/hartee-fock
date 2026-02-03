@@ -2,6 +2,7 @@ import xml.etree.ElementTree as ET
 import os
 import typing
 import numpy
+import copy
 from src.basis import base_basis, gaussian
 from xml.dom import minidom
 
@@ -81,11 +82,12 @@ class BasisSetLoader:
 
         for _index, _atom in enumerate(_atoms):
             for _sh in _basis[_atom]:
-                _sh.location = _coords[_index] * 1.8897259885789  # Need to convert the coordinates to bohr before calculations
-                _sh.atom = _atom
-                self.full_basis.append(_sh)
+                sh_copy = copy.deepcopy(_sh)  # make a fresh copy
+                sh_copy.location = _coords[_index] * 1.8897259885789  # convert to Bohr
+                sh_copy.atom = _atom
+                self.full_basis.append(sh_copy)
 
-        return self.full_basis
+        return numpy.array(self.full_basis, dtype=object)
 
     def _write_xml(self, checkpoint: str = "checkpoint.xml") -> None:
         """

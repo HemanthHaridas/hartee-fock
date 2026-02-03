@@ -11,7 +11,7 @@ class IntegralEngine(abc.ABC):
     (e.g., McMurchie-Davidson, Obara-Saika).
     """
 
-    def __init__(self, basis_set: list[base_basis.BaseShell] = None, use_optimized: bool = False):
+    def __init__(self, molecule: typing.Dict[str, typing.Any], basis_set: list[base_basis.BaseShell] = None, use_optimized: bool = False):
         """
         Initialize the integral engine.
 
@@ -20,9 +20,10 @@ class IntegralEngine(abc.ABC):
         basis_set : object, optional
             Basis set information (exponents, coefficients, angular momentum).
         """
-        self.basis_set       : list[base_basis.BaseShell] = basis_set
-        self.use_optimized   : bool = use_optimized
-        self.integral_backend: typing.Any = None
+        self.basis_set        : list[base_basis.BaseShell] = basis_set
+        self.integral_backend : typing.Any = None
+        self.molecule         : typing.Dict[str, typing.Any] = molecule
+        self.use_optimized    : bool = use_optimized
 
         if self.use_optimized:
             try:
@@ -32,16 +33,9 @@ class IntegralEngine(abc.ABC):
                 raise RuntimeError("Optimized C++ backend not found.") from e
 
     @abc.abstractmethod
-    def compute_overlap(self, shell_a, shell_b):
+    def compute_overlap(self):
         """
-        Compute overlap integrals between two shells.
-
-        Parameters
-        ----------
-        shell_a : object
-            First shell (contains exponents, coefficients, angular momentum).
-        shell_b : object
-            Second shell.
+        Compute overlap integrals.
 
         Returns
         -------
@@ -50,22 +44,22 @@ class IntegralEngine(abc.ABC):
         """
         pass
 
-    @abc.abstractmethod
-    def compute_eri(self, shell_a, shell_b, shell_c, shell_d):
-        """
-        Compute electron repulsion integrals (ERIs).
+    # @abc.abstractmethod
+    # def compute_eri(self, shell_a, shell_b, shell_c, shell_d):
+    #     """
+    #     Compute electron repulsion integrals (ERIs).
 
-        Parameters
-        ----------
-        shell_a, shell_b, shell_c, shell_d : object
-            Shells involved in the integral.
+    #     Parameters
+    #     ----------
+    #     shell_a, shell_b, shell_c, shell_d : object
+    #         Shells involved in the integral.
 
-        Returns
-        -------
-        numpy.ndarray
-            ERI tensor.
-        """
-        pass
+    #     Returns
+    #     -------
+    #     numpy.ndarray
+    #         ERI tensor.
+    #     """
+    #     pass
 
     def compute_kinetic(self, shell_a, shell_b):
         """

@@ -3,7 +3,7 @@ import numpy
 from src.basis import loader
 from src.geometry import cartesian
 from src.geometry import zmatrix
-from src.integrals.python import base_integrals, one_electron
+from src.integrals.python import engine, base_integrals, one_electron
 
 # create a water molecule using cartesian coordinates
 water = cartesian.Cartesian()
@@ -102,17 +102,17 @@ gaussian_centers, gaussian_integrals, gaussian_exponents = base_integrals.gaussi
 
 print(basis_sets[0].exponents.shape[0])
 
-# now test overlap integrals
+# now test overlap integrals for two s orbitals on the same center
 overlaps = one_electron.overlap_md_3D(
     centerA=basis_sets[0].location, exponentA=basis_sets[0].exponents, shellA=basis_sets[0].angular_momentum.value[0],
-    centerB=basis_sets[0].location, exponentB=basis_sets[0].exponents, shellB=basis_sets[0].angular_momentum.value[0]
+    centerB=basis_sets[4].location, exponentB=basis_sets[4].exponents, shellB=basis_sets[4].angular_momentum.value[0]
 )
 
 print(
     numpy.sum(
         overlaps
         * basis_sets[0].normalized_coeffs[basis_sets[0].angular_momentum.value[0]][..., None]
-        * basis_sets[0].normalized_coeffs[basis_sets[0].angular_momentum.value[0]][None, ...]
+        * basis_sets[4].normalized_coeffs[basis_sets[4].angular_momentum.value[0]][None, ...]
 
     )
 )
@@ -123,4 +123,6 @@ dfs = base_integrals.double_factorial_array(keys)
 print(dfs)
 
 # start creating integral kernel
-# integral_kernel = engine.McMurchieDavidson(basis_set=basis_sets, use_optimized=True)
+integral_kernel = engine.McMurchieDavidson(basis_set=basis_sets, use_optimized=False, molecule=water.geometry)
+overlaps = integral_kernel.compute_overlap()
+print(overlaps)
