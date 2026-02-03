@@ -1,3 +1,4 @@
+from scr.integrals.python import one_electron
 from src.basis import loader
 from src.geometry import cartesian
 from src.geometry import zmatrix
@@ -77,10 +78,10 @@ kcl.geometry = (
 )
 print(kcl)
 
-test = basis.load(basis_name="6-31g", basis_type="gaussian94", molecule=water.geometry)
+basis_sets = basis.load(basis_name="6-31g", basis_type="gaussian94", molecule=water.geometry)
 
 # print the basis set information
-for shell in test:
+for shell in basis_sets:
     # print(shell)
     print(f"Shell Type      : {shell.angular_momentum:10s}\n",
           f"Exponents       : {shell.exponents}\n",
@@ -93,7 +94,10 @@ for shell in test:
 basis._write_xml()
 
 # now test gaussian product theorem
-gaussiancenters, gaussianintegrals, gaussianexponents = base.gaussiantheorem(
-    centerA=test[0].location, exponentA=test[0].exponents,
-    centerB=test[2].location, exponentB=test[2].exponents
+gaussian_centers, gaussian_integrals, gaussian_exponents = base.gaussian_product_theorem(
+    centerA=basis_sets[0].location, exponentA=basis_sets[0].exponents,
+    centerB=basis_sets[2].location, exponentB=basis_sets[2].exponents
 )
+
+# start creating integral kernel
+integral_kernel = one_electron.McMurchieDavidson(basis_set=basis_sets)

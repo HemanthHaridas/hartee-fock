@@ -1,8 +1,80 @@
 import numpy as np
+import abc
+from scr.basis import base
 
 
-def gaussiantheorem(centerA: np.ndarray, exponentA: np.ndarray,
-                    centerB: np.ndarray, exponentB: np.ndarray) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+class IntegralEngine(abc.ABC):
+    """
+    Abstract base class for Gaussian integral engines.
+    Provides a consistent interface for different algorithms
+    (e.g., McMurchie-Davidson, Obara-Saika).
+    """
+
+    def __init__(self, basis_set: list[base.BaseShell] = None, use_optimized: str = False):
+        """
+        Initialize the integral engine.
+
+        Parameters
+        ----------
+        basis_set : object, optional
+            Basis set information (exponents, coefficients, angular momentum).
+        """
+        self.basis_set = basis_set
+
+    @abc.abstractmethod
+    def compute_overlap(self, shell_a, shell_b):
+        """
+        Compute overlap integrals between two shells.
+
+        Parameters
+        ----------
+        shell_a : object
+            First shell (contains exponents, coefficients, angular momentum).
+        shell_b : object
+            Second shell.
+
+        Returns
+        -------
+        numpy.ndarray
+            Overlap integral matrix.
+        """
+        pass
+
+    @abc.abstractmethod
+    def compute_eri(self, shell_a, shell_b, shell_c, shell_d):
+        """
+        Compute electron repulsion integrals (ERIs).
+
+        Parameters
+        ----------
+        shell_a, shell_b, shell_c, shell_d : object
+            Shells involved in the integral.
+
+        Returns
+        -------
+        numpy.ndarray
+            ERI tensor.
+        """
+        pass
+
+    def compute_kinetic(self, shell_a, shell_b):
+        """
+        Optional: Compute kinetic energy integrals.
+        Default implementation raises NotImplementedError.
+        """
+        raise NotImplementedError("Kinetic integrals not implemented.")
+
+    def compute_nuclear_attraction(self, shell_a, shell_b, center):
+        """
+        Optional: Compute nuclear attraction integrals.
+        Default implementation raises NotImplementedError.
+        """
+        raise NotImplementedError("Nuclear attraction integrals not implemented.")
+
+
+# Utility Functions
+def gaussian_product_theorem(centerA: np.ndarray, exponentA: np.ndarray,
+                             centerB: np.ndarray, exponentB: np.ndarray) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
     """
     Compute the Gaussian product theorem quantities for two 3D centers with sets of exponents.
 
@@ -46,16 +118,16 @@ def gaussiantheorem(centerA: np.ndarray, exponentA: np.ndarray,
     e2 = exponentB[None, :]        # (1,M)
 
     # Combined centers (broadcast over 3D vector)
-    gaussiancenters = (e1[..., None] * centerA + e2[..., None] * centerB) / (e1 + e2)[..., None]
+    gaussian_centers = (e1[..., None] * centerA + e2[..., None] * centerB) / (e1 + e2)[..., None]
 
     # Combined exponents
-    gaussianexponents = (e1 * e2) / (e1 + e2)
+    gaussian_exponents = (e1 * e2) / (e1 + e2)
 
     # Distance squared between centers
     diff = centerA - centerB
     squared_dist = np.dot(diff, diff)
 
     # Integrals
-    gaussianintegrals = np.exp(-gaussianexponents * squared_dist)
+    gaussian_integrals = np.exp(-gaussian_exponents * squared_dist)
 
-    return gaussiancenters, gaussianintegrals, gaussianexponents
+    return gaussian_centers, gaussian_integrals, gaussian_exponents
