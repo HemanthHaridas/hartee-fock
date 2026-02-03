@@ -51,26 +51,45 @@ class BaseShell(abc.ABC):
 
     def normalize_tuple(self, lx: int, ly: int, lz: int) -> numpy.ndarray:
         """Normalize contracted Gaussian for a given angular momentum tuple."""
-        L = lx + ly + lz
-        norm_constants = []
-        for alpha in self.exponents:
-            prefactor = (2**L * (2 * alpha)**(L + 1.5)) / (
-                math.pi**1.5
-                * double_factorial(2 * lx - 1)
+        tot_momentum = lx + ly + lz
+
+        # --- Primitive normalization factors ---
+        prefactor_prim = (
+            2**(2 * tot_momentum + 1.5)
+            / (
+                double_factorial(2 * lx - 1)
                 * double_factorial(2 * ly - 1)
                 * double_factorial(2 * lz - 1)
+                * numpy.pi**1.5
             )
-            N = math.sqrt(prefactor)
-            norm_constants.append(N)
-        prim_normed = self.coefficients * numpy.array(norm_constants)
+        )
 
-        # contraction normalization
-        S = numpy.zeros((len(self.exponents), len(self.exponents)))
-        for i, ai in enumerate(self.exponents):
-            for j, aj in enumerate(self.exponents):
-                S[i, j] = (math.pi / (ai + aj))**1.5
-        norm = math.sqrt(prim_normed @ S @ prim_normed)
-        return prim_normed / norm
+        prim_normals = numpy.sqrt(
+            (self.exponents**(tot_momentum + 1.5)) * prefactor_prim
+        )
+
+        # --- Contraction normalization factor ---
+        # Pairwise primitive contributions
+        exp_sum = self.exponents[:, None] + self.exponents[None, :]
+        coeff_prod = self.coefficients[:, None] * self.coefficients[None, :]
+        norm_prod = prim_normals[:, None] * prim_normals[None, :]
+
+        pair_contrib = coeff_prod * norm_prod / (exp_sum ** (tot_momentum + 1.5))
+        normalfactor = numpy.sum(pair_contrib)
+
+        prefactor_cGTO = (
+            numpy.pi**1.5
+            * double_factorial(2 * lx - 1)
+            * double_factorial(2 * ly - 1)
+            * double_factorial(2 * lz - 1)
+            / (2.0**tot_momentum)
+        )
+
+        normalfactor = numpy.sqrt(prefactor_cGTO * normalfactor)
+
+        # --- Return normalized contraction coefficients times primitive norms ---
+        # This combines both normalizations
+        return prim_normals * self.coefficients / normalfactor
 
     def normalize(self):
         """Normalize all angular momentum tuples in this shell."""

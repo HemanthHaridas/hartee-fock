@@ -105,15 +105,17 @@ print(basis_sets[0].exponents.shape[0])
 # now test overlap integrals
 overlaps = one_electron.overlap_md_3D(
     centerA=basis_sets[0].location, exponentA=basis_sets[0].exponents, shellA=basis_sets[0].angular_momentum.value[0],
-    centerB=basis_sets[2].location, exponentB=basis_sets[2].exponents, shellB=basis_sets[2].angular_momentum.value[0]
+    centerB=basis_sets[0].location, exponentB=basis_sets[0].exponents, shellB=basis_sets[0].angular_momentum.value[0]
 )
 
-# print(
-#     numpy.sum(
-#         overlaps
-#         * basis_sets[0].normalized_coeffs[basis_sets[0].angular_momentum.value[0]][..., None] * basis_sets[2].normalized_coeffs[basis_sets[2].angular_momentum.value[0]][None, ...]
-#     )
-# )
+print(
+    numpy.sum(
+        overlaps
+        * basis_sets[0].normalized_coeffs[basis_sets[0].angular_momentum.value[0]][..., None]
+        * basis_sets[0].normalized_coeffs[basis_sets[0].angular_momentum.value[0]][None, ...]
+
+    )
+)
 
 # test vectorized double factorials
 keys = numpy.arange(1, 11, 1)
