@@ -50,3 +50,46 @@ class McMurchieDavidson(base_integrals.IntegralEngine):
         overlaps = overlaps + overlaps.T - numpy.diag(numpy.diag(overlaps))
 
         return overlaps
+
+    def compute_kinetic(self) -> numpy.ndarray:
+        """
+        Compute the symmetric kinetic matrix using the McMurchie–Davidson algorithm.
+
+        Returns:
+            numpy.ndarray: (num_basis × num_basis) symmetric overlap matrix.
+        """
+        num_basis = len(self.basis_set)
+        shell_idx = numpy.arange(num_basis)
+
+        # Build index grids
+        ix_grid, iy_grid = numpy.meshgrid(shell_idx, shell_idx, indexing="ij")
+
+        # Define scalar overlap function
+        def kinetic_func(ix: int, iy: int) -> float:
+            if ix > iy:
+                return 0.0
+
+            integral = one_electron.kinetic_md_3D(
+                centerA=self.basis_set[ix].location,
+                exponentA=self.basis_set[ix].exponents,
+                shellA=self.basis_set[ix].angular_momentum.value[0],
+                centerB=self.basis_set[iy].location,
+                exponentB=self.basis_set[iy].exponents,
+                shellB=self.basis_set[iy].angular_momentum.value[0]
+            )
+
+            contracted = numpy.sum(
+                integral
+                * self.basis_set[ix].normalized_coeffs[self.basis_set[ix].angular_momentum.value[0]][..., None]
+                * self.basis_set[iy].normalized_coeffs[self.basis_set[iy].angular_momentum.value[0]][None, ...]
+            )
+            return contracted
+
+        # Vectorize the scalar function
+        vectorized_kinetic = numpy.vectorize(kinetic_func, otypes=[float])
+        kinetics = vectorized_kinetic(ix_grid, iy_grid)
+
+        # Enforce symmetry
+        kinetics = kinetics + kinetics.T - numpy.diag(numpy.diag(kinetics))
+
+        return kinetics

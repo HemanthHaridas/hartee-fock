@@ -1,4 +1,5 @@
 import numpy
+import copy
 from src.integrals.python import base_integrals
 
 
@@ -61,6 +62,49 @@ def overlap_md_3D(centerA: numpy.ndarray, exponentA: numpy.ndarray, shellA: nump
     overlap = gaussian_integrals * overlap_x * overlap_y * overlap_z
 
     return overlap
+
+
+def kinetic_md_3D(centerA: numpy.ndarray, exponentA: numpy.ndarray, shellA: numpy.ndarray,
+                  centerB: numpy.ndarray, exponentB: numpy.ndarray, shellB: numpy.ndarray) -> numpy.ndarray:
+    """
+    Compute kinetic integral using McMurchie-Davidson scheme.
+
+    The MD scheme uses Hermite Gaussians as an intermediate expansion.
+    """
+    exponentA = numpy.ravel(exponentA)
+    exponentB = numpy.ravel(exponentB)
+
+    # compute reagular overlap
+    overlap = overlap_md_3D(centerA, exponentA, shellA, centerB, exponentB, shellB)
+
+    # initialize primitive kinetic
+    kinetic = numpy.zeros_like(overlap)
+
+    def _modify_shell(shell: numpy.ndarray, delta: int, index: int) -> numpy.ndarray:
+        _shell = copy.deepcopy(shell)
+        _shell = numpy.array(_shell)
+        _shell[index] = _shell[index] + delta
+        return tuple(_shell)
+
+    for index, axis in enumerate(shellB):
+        term1 = 0
+        # this term will only exist if the angular momentum is greater than 2
+        if axis >= 2:
+            stepdown_shell = _modify_shell(shellB, -2, index)
+            stepdown_overlap = overlap_md_3D(centerA, exponentA, shellA, centerB, exponentB, stepdown_shell)
+            term1 = axis * (axis - 1) * stepdown_overlap
+
+        _exponentB = exponentB[None, :]
+        term0 = overlap * -4 * axis * _exponentB
+
+        stepup_shell = _modify_shell(shellB, 2, index)
+        stepup_overlap = overlap_md_3D(centerA, exponentA, shellA, centerB, exponentB, stepup_shell)
+        term2 = 4.0 * (numpy.pow(_exponentB, 2)) * stepup_overlap
+
+        # now sum the contributions
+        kinetic += term2 + term0 + term1
+
+    return (-0.5 * kinetic)
 
 
 def hermite_expansion_coefficients(i: int, j: int, XA: float, XB: float, XP: numpy.ndarray, p: numpy.ndarray) -> numpy.ndarray:

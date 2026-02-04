@@ -1,6 +1,8 @@
 # from src.integrals.python import engine
 import numpy
+
 from src.basis import loader
+from src.helpers import checkpoint
 from src.geometry import cartesian
 from src.geometry import zmatrix
 from src.integrals.python import engine, base_integrals, one_electron
@@ -91,9 +93,6 @@ for shell in basis_sets:
           f"Center          : {shell.atom} at {shell.location}"
           )
 
-# write the basis sets as an xml file
-basis._write_xml()
-
 # now test gaussian product theorem
 gaussian_centers, gaussian_integrals, gaussian_exponents = base_integrals.gaussian_product_theorem(
     centerA=basis_sets[0].location, exponentA=basis_sets[0].exponents,
@@ -125,4 +124,12 @@ print(dfs)
 # start creating integral kernel
 integral_kernel = engine.McMurchieDavidson(basis_set=basis_sets, use_optimized=False, molecule=water.geometry)
 overlaps = integral_kernel.compute_overlap()
-print(overlaps)
+kinetics = integral_kernel.compute_kinetic()
+
+print(numpy.around(overlaps, decimals=3))
+print(numpy.around(kinetics, decimals=3))
+
+# test writing checkpoints
+checkpoint.write_checkpoint(molecule=water.geometry)
+checkpoint.write_checkpoint(basis_objects=basis_sets)
+checkpoint.write_checkpoint(integrals={"overlaps": overlaps, "kinetics": kinetics})

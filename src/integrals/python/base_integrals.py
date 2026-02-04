@@ -11,7 +11,7 @@ class IntegralEngine(abc.ABC):
     (e.g., McMurchie-Davidson, Obara-Saika).
     """
 
-    def __init__(self, molecule: typing.Dict[str, typing.Any], basis_set: list[base_basis.BaseShell] = None, use_optimized: bool = False):
+    def __init__(self, molecule: typing.Dict[str, typing.Any], basis_set: list[base_basis.BaseShell] = None, use_optimized: bool = False, checkpoint: bool = True):
         """
         Initialize the integral engine.
 
@@ -31,6 +31,9 @@ class IntegralEngine(abc.ABC):
                 self.integral_backend = integrals
             except ImportError as e:
                 raise RuntimeError("Optimized C++ backend not found.") from e
+
+        # if checkpoint:
+        #     self.checkpoint : typing.TextIO = open("checkpoint.xml", "a", encoding="utf-8")
 
     @abc.abstractmethod
     def compute_overlap(self):
@@ -61,12 +64,12 @@ class IntegralEngine(abc.ABC):
     #     """
     #     pass
 
-    def compute_kinetic(self, shell_a, shell_b):
+    @abc.abstractmethod
+    def compute_kinetic(self):
         """
         Optional: Compute kinetic energy integrals.
         Default implementation raises NotImplementedError.
         """
-        raise NotImplementedError("Kinetic integrals not implemented.")
 
     def compute_nuclear_attraction(self, shell_a, shell_b, center):
         """
